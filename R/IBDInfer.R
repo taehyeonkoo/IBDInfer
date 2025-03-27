@@ -1,11 +1,54 @@
-library(ggplot2)
-library(tidyr)
-library(dplyr)
-IBDInfer <- function(y, b, z, g, w, alpha = 0.05, data = NULL){
+#' @title Design-based Inference for Incomplete Block Designs
+#' @description Conduct the design-based inference for incomplete block designs.
+#'
+#'
+#' @param y Observed outcomes.
+#' @param b Block identifier (ID).
+#' @param z Assigned treatments.
+#' @param g A contrast vector, must sum to zero.
+#' @param w A weight vector, must sum to one and contain non-negative values.
+#' @param alpha Confidence level, default set to 0.05.
+#' @param data A data frame; if provided, y, b, and z should be column names in the data frame.
+#'
+#' @returns \code{IBDInfer} returns an object of class "IBD", which is a list containing the following components: :
+#' \item{tau.ht}{The Horvitz-Thompson estimator of tau.}
+#' \item{tau.haj}{The Hajek estimator of tau.}
+#' \item{var_tau_ht_bb}{Variance estimator for the Horvitz-Thompson estimator with between-block bias.}
+#' \item{var_tau_ht_wb}{Variance estimator for the Horvitz-Thompson estimator with within-block bias.}
+#' \item{var_tau_haj_bb}{Variance estimator for the Hajek estimator with between-block bias.}
+#' \item{var_tau_haj_wb}{Variance estimator for the Hajek estimator with within-block bias.}
+#' \item{CI_ht_bb}{Confidence interval with the Horvitz-Thompson estimator and variance estimator with between-block bias.}
+#' \item{CI_ht_wb}{Confidence interval with the Horvitz-Thompson estimator and variance estimator with within-block bias.}
+#' \item{CI_haj_bb}{Confidence interval with the Hajek estimator and variance estimator with between-block bias.}
+#' \item{CI_haj_wb}{Confidence interval with the Hajek estimator and variance estimator with within-block bias.}
+#' \item{yht}{The Horvitz-Thompson estimator for each treatment.}
+#' \item{yhaj}{The Hajek estimator for each treatment.}
+#' \item{Sht_bb}{Covariance estimator for the Horvitz-Thompson estimator for each treatment with between-block bias.}
+#' \item{Sht_wb}{Covariance estimator for the Horvitz-Thompson estimator for each treatment with within-block bias.}
+#' \item{Shaj_bb}{Covariance estimator for the Hajek estimator for each treatment with between-block bias.}
+#' \item{Shaj_wb}{Covariance estimator for the Hajek estimator for each treatment with within-block bias.}
+#' \item{alpha}{Confidence level}
+#'
+#' @importFrom dplyr group_by summarise mutate %>%
+#' @importFrom tidyr pivot_wider
+#' @importFrom stats qnorm var
+#' @export
+#'
+#' @examples
+#' K <- 6
+#' n.trt <- 3
+#' t <- 2
+#' n.vec <- rep(4, K)
+#' IBDgen(K = K, n.trt = n.trt, t = t, n.vec = n.vec)
+#'
+#'
+#' @references {
+#' Koo, T., Pashley, N.E. (2024), Design-based Causal Inference for Incomplete Block Designs, \emph{arXiv preprint arXiv:2405.19312}. \cr
+#' }
+#'
+IBDInfer <- function(y, b, z, g, w = c("Unit","Block"), alpha = 0.05, data = NULL){
   # Check whether g is contrast vector or not
   stopifnot(is.vector(g),sum(g)==0)
-  # Check whether w is weight vector or not
-  stopifnot(is.vector(w),round(sum(w),5)==1,all(w >= 0))
   if (!is.null(data)) {
     # Convert variable names to actual columns in the data frame
     y <- eval(substitute(y), data)
@@ -39,6 +82,19 @@ IBDInfer <- function(y, b, z, g, w, alpha = 0.05, data = NULL){
   # t is constant over block.
   t <- data.sum$t[1]
   n.vec <- data.sum$n.vec # n_k
+
+  # Check whether w is weight vector or not
+  w <- match.arg(w)
+  if (w %in% c("Unit","Block")) {
+    if (w == "Unit") {
+      w <- n.vec/sum(n.vec)
+    } else {
+      w <- rep(1,K)/K
+    }
+  }
+  stopifnot(is.vector(w),round(sum(w),5)==1,all(w >= 0))
+
+
   R_k <- matrix(as.numeric(unlist(data.sum$R_k)),ncol = t,byrow = T)
   R_k.table <- t(apply(R_k, 1, function(x) table(factor(x,  unique(c(R_k))))))
   R_k.table <- R_k.table[ , order(colnames(R_k.table))]
@@ -122,9 +178,10 @@ IBDInfer <- function(y, b, z, g, w, alpha = 0.05, data = NULL){
 
   Sht_bb <- diag(diag_ht_bb)+off_diag_ht_bb
   Sht_wb <-  diag(diag_ht_wb)+off_diag_ht_wb
+  g.idx <- which(g!=0)
 
-  var_tau_ht_bb <- as.numeric(t(g)%*%Sht_bb%*%g)
-  var_tau_ht_wb <- as.numeric(t(g)%*%Sht_wb%*%g)
+  var_tau_ht_bb <- as.numeric(t(g[g.idx])%*%Sht_bb[g.idx,g.idx]%*%g[g.idx])
+  var_tau_ht_wb <- as.numeric(t(g[g.idx])%*%Sht_wb[g.idx,g.idx]%*%g[g.idx])
 
   CI_ht_bb <- c(tau.ht-qnorm(1-alpha/2)*sqrt(var_tau_ht_bb),tau.ht+qnorm(1-alpha/2)*sqrt(var_tau_ht_bb))
   CI_ht_wb <- c(tau.ht-qnorm(1-alpha/2)*sqrt(var_tau_ht_wb),tau.ht+qnorm(1-alpha/2)*sqrt(var_tau_ht_wb))
@@ -182,20 +239,23 @@ IBDInfer <- function(y, b, z, g, w, alpha = 0.05, data = NULL){
   Shaj_bb <- diag(diag_haj_bb)+off_diag_haj_bb
   Shaj_wb <-  diag(diag_haj_wb)+off_diag_haj_wb
 
-  var_tau_haj_bb <- as.numeric(t(g)%*%Shaj_bb%*%g)
-  var_tau_haj_wb <- as.numeric(t(g)%*%Shaj_wb%*%g)
+  var_tau_haj_bb <- as.numeric(t(g[g.idx])%*%Shaj_bb[g.idx,g.idx]%*%g[g.idx])
+  var_tau_haj_wb <- as.numeric(t(g[g.idx])%*%Shaj_wb[g.idx,g.idx]%*%g[g.idx])
 
-  CI_haj_bb <- c(tau.haj-qnorm(1-alpha/2)*sqrt(var_tau_haj_bb),tau.ht+qnorm(1-alpha/2)*sqrt(var_tau_haj_bb))
-  CI_haj_wb <- c(tau.haj-qnorm(1-alpha/2)*sqrt(var_tau_haj_wb),tau.ht+qnorm(1-alpha/2)*sqrt(var_tau_haj_wb))
+  CI_haj_bb <- c(tau.haj-qnorm(1-alpha/2)*sqrt(var_tau_haj_bb),tau.haj+qnorm(1-alpha/2)*sqrt(var_tau_haj_bb))
+  CI_haj_wb <- c(tau.haj-qnorm(1-alpha/2)*sqrt(var_tau_haj_wb),tau.haj+qnorm(1-alpha/2)*sqrt(var_tau_haj_wb))
 
 
+  returnList <- list(tau.ht = tau.ht, tau.haj = tau.haj,
+                     var_tau_ht_bb = var_tau_ht_bb, var_tau_ht_wb = var_tau_ht_wb,
+                     var_tau_haj_bb = var_tau_haj_bb, var_tau_haj_wb = var_tau_haj_wb,
+                     CI_ht_bb = CI_ht_bb, CI_ht_wb = CI_ht_wb,
+                     CI_haj_bb = CI_haj_bb, CI_haj_wb = CI_haj_wb,
+                     yht = yht, yhaj = yhaj,
+                     Sht_bb = Sht_bb, Sht_wb = Sht_wb,
+                     Shaj_bb = Shaj_bb, Shaj_wb = Shaj_wb,alpha = alpha)
 
-  return(list(tau.ht = tau.ht, tau.haj = tau.haj,
-              var_tau_ht_bb = var_tau_ht_bb, var_tau_ht_wb = var_tau_ht_wb,
-              var_tau_haj_bb = var_tau_haj_bb, var_tau_haj_wb = var_tau_haj_wb,
-              CI_ht_bb = CI_ht_bb, CI_ht_wb = CI_ht_wb,
-              CI_haj_bb = CI_haj_bb, CI_haj_wb = CI_haj_wb,
-              yht = yht, yhaj = yhaj,
-              Sht_bb = Sht_bb, Sht_wb = Sht_wb,
-              Shaj_bb = Shaj_bb, Shaj_wb = Shaj_wb))
+
+  class(returnList) <- "IBD"
+  return(returnList)
 }

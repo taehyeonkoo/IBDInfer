@@ -1,3 +1,34 @@
+#' @title Generating Incomplete Block Designs
+#' @description Generate incomplete block designs.
+#'
+#'
+#' @param K The number of blocks.
+#' @param n.trt The number of whole treatments.
+#' @param t The number of treatments to be assigned to each block.
+#' @param n.vec The vector of block sizes.
+#' @param L The vector of the number of blocks having each treatment.
+#' @param l The matrix of the number of blocks having each pair of treatments.
+#' @param W The set of treatment subsets used in the design.
+#' @param balanced Whether the design is balanced or not. If \code{TRUE}, generate a balanced design.
+#'
+#' @returns A list containing the following components:
+#' \item{W}{The set of treatment subsets used in the design.}
+#' \item{Rk}{The block assignment matrix.}
+#' \item{blk_assign}{The block assignment data frame.}
+#'
+#' @importFrom crossdes find.BIB isGYD
+#' @export
+#'
+#' @examples
+#' K <- 6
+#' n.trt <- 3
+#' t <- 2
+#' n.vec <- rep(4, K)
+#' IBDgen(K = K, n.trt = n.trt, t = t, n.vec = n.vec)
+#'
+#' @references {
+#' Sailer, M. O., & Bornkamp, M. B. (2022). Package ‘crossdes’: Construction of Crossover Designs.
+#' }
 IBDgen <- function(K,n.trt,t,n.vec = NULL, L = NULL, l = NULL,W = NULL,balanced = T){
   stopifnot(!is.null(K),!is.null(n.trt),!is.null(t))
   stopifnot(n.trt>t)

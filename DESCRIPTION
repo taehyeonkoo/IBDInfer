@@ -1,4 +1,4 @@
-Package: IBD
+Package: IBDInfer
 Title: Design-based Causal Inference Method for Incomplete Block Designs
 Version: 0.0.1
 Authors@R: 

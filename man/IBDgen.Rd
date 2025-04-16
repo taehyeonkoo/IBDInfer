@@ -26,6 +26,7 @@ IBDgen(K, n.trt, t, n.vec = NULL, L = NULL, l = NULL, W = NULL, balanced = T)
 \value{
 A list containing the following components:
 \item{W}{The set of treatment subsets used in the design.}
+\item{W.uniq}{The unique set of treatment subsets used in the design with proportion in \code{W}.}
 \item{Rk}{The block assignment matrix.}
 \item{blk_assign}{The block assignment data frame.}
 }

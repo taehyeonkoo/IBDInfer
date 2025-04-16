@@ -6,7 +6,8 @@
 #' @export
 summary.IBD<- function(object,...){
   IBDInfer <- object
-  cat(rep("_", 50), "\n")
+  cat("Coefficients:\n")
+  # cat(rep("_", 50), "\n")
   result<-matrix(NA, ncol=7, nrow=2)
   result <- data.frame(result)
   colnames(result)<-c("Estimate","Std.Error.wb","Std.Error.bb",
@@ -28,5 +29,8 @@ summary.IBD<- function(object,...){
                   ifelse(is.na(IBDInfer$CI_haj_bb[1]),NA,IBDInfer$CI_haj_bb[1]))
   result[,7] <- c(ifelse(is.na(IBDInfer$CI_ht_bb[2]),NA,IBDInfer$CI_ht_bb[2]),
                   ifelse(is.na(IBDInfer$CI_haj_bb[2]),NA,IBDInfer$CI_haj_bb[2]))
-  print(round(result,3),right=F)
+  print(round(result[,1:3],3),right=F)
+  cat(rep("_", 50), "\n")
+  cat("Confidence intervals:\n")
+  print(round(result[,-(1:3)],3),right=F)
 }

@@ -49,8 +49,9 @@ K <- 6
 n.trt <- 3
 t <- 2
 n.vec <- rep(4, K)
-IBDgen(K = K, n.trt = n.trt, t = t, n.vec = n.vec)
-
+df <- IBDgen(K = K, n.trt = n.trt, t = t, n.vec = n.vec)$blk_assign
+df$y <- rnorm(nrow(df), 0, 1)
+IBDInfer <- IBDInfer(y = y, b = blk_id, z = assign, g = c(1, -1, 0), w = "Block", data = df)
 
 }
 \references{

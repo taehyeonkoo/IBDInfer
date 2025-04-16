@@ -29,7 +29,7 @@
 #' \item{Shaj_wb}{Covariance estimator for the Hajek estimator for each treatment with within-block bias.}
 #' \item{alpha}{Confidence level}
 #'
-#' @importFrom dplyr group_by summarise mutate %>%
+#' @importFrom dplyr group_by summarise mutate %>% n
 #' @importFrom tidyr pivot_wider
 #' @importFrom stats qnorm var
 #' @export
@@ -39,8 +39,9 @@
 #' n.trt <- 3
 #' t <- 2
 #' n.vec <- rep(4, K)
-#' IBDgen(K = K, n.trt = n.trt, t = t, n.vec = n.vec)
-#'
+#' df <- IBDgen(K = K, n.trt = n.trt, t = t, n.vec = n.vec)$blk_assign
+#' df$y <- rnorm(nrow(df), 0, 1)
+#' IBDInfer <- IBDInfer(y = y, b = blk_id, z = assign, g = c(1, -1, 0), w = "Block", data = df)
 #'
 #' @references {
 #' Koo, T., Pashley, N.E. (2024), Design-based Causal Inference for Incomplete Block Designs, \emph{arXiv preprint arXiv:2405.19312}. \cr
@@ -84,14 +85,17 @@ IBDInfer <- function(y, b, z, g, w = c("Unit","Block"), alpha = 0.05, data = NUL
   n.vec <- data.sum$n.vec # n_k
 
   # Check whether w is weight vector or not
-  w <- match.arg(w)
-  if (w %in% c("Unit","Block")) {
-    if (w == "Unit") {
-      w <- n.vec/sum(n.vec)
-    } else {
-      w <- rep(1,K)/K
+  if (is.character(w)) {
+    w <- match.arg(w)
+    if (w %in% c("Unit","Block")) {
+      if (w == "Unit") {
+        w <- n.vec/sum(n.vec)
+      } else {
+        w <- rep(1,K)/K
+      }
     }
   }
+
   stopifnot(is.vector(w),round(sum(w),5)==1,all(w >= 0))
 
 

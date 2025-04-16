@@ -13,6 +13,7 @@
 #'
 #' @returns A list containing the following components:
 #' \item{W}{The set of treatment subsets used in the design.}
+#' \item{W.uniq}{The unique set of treatment subsets used in the design with proportion in \code{W}.}
 #' \item{Rk}{The block assignment matrix.}
 #' \item{blk_assign}{The block assignment data frame.}
 #'
@@ -53,6 +54,31 @@ IBDgen <- function(K,n.trt,t,n.vec = NULL, L = NULL, l = NULL,W = NULL,balanced 
   }
   stopifnot(length(n.vec) == K & all(n.vec %% t ==0))
 
+  # Sort each row so permutations match
+  sorted_mat <- t(apply(W, 1, sort))
+
+  # Create string keys for row comparison
+  row_keys <- apply(sorted_mat, 1, paste, collapse = ",")
+
+  # Count frequencies and proportions
+  freq_table <- table(row_keys)
+  proportions <- as.numeric(freq_table) / nrow(mat)
+
+  # Convert row_keys back to numeric matrix
+  unique_rows <- do.call(rbind, strsplit(names(freq_table), ","))
+  unique_rows <- apply(unique_rows, 2, as.numeric)
+
+  # Build data frame
+  result_df <- as.data.frame(unique_rows)
+
+  # Rename columns to trt1, trt2, ..., trtK
+  # K <- ncol(result_df)
+  colnames(result_df) <- paste0("trt", seq_len(n.trt))
+
+  # Add proportion column
+  result_df$prop <- proportions
+
+  W.uniq <- result_df
   # Enlarging W if nrow(W)<K #
   if (dim(W)[1] < K){
     Rk <-  kronecker(matrix(1, K/(dim(W)[1]), 1), W)
@@ -77,5 +103,5 @@ IBDgen <- function(K,n.trt,t,n.vec = NULL, L = NULL, l = NULL,W = NULL,balanced 
   df <- do.call(rbind, df_list)
 
 
-  return(list(W = W, Rk = Rk, blk_assign = df))
+  return(list(W = W, W.uniq = W.uniq, Rk = Rk, blk_assign = df))
 }

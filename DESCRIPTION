@@ -1,5 +1,6 @@
 Package: IBDInfer
-Title: Design-based Causal Inference Method for Incomplete Block Designs
+Type: Package
+Title: Design-Based Causal Inference Method for Incomplete Block Designs
 Version: 0.0.1
 Authors@R: c(person(given = "Taehyeon",
              family = "Koo",
@@ -9,7 +10,8 @@ Authors@R: c(person(given = "Taehyeon",
              family = "Pashley",
              email = "nicole.pashley@rutgers.edu", 
              role = "ctb"))
-Description: The IBDInfer R package implements methods for estimation and inference under Incomplete Block Designs (IBDs) and Balanced Incomplete Block Designs (BIBDs) within a design-based finite-population framework. Based on Koo and Pashley (2024) <arXiv:2405.19312>, it includes block-level estimators and extends to unit-level effects using Horvitz-Thompson and Hájek estimators. The package also provides asymptotic confidence intervals to support valid statistical inference.
+Description: This R package implements methods for estimation and inference under Incomplete Block Designs and Balanced Incomplete Block Designs within a design-based finite-population framework. Based on 'Koo and Pashley' (2024) <arXiv:2405.19312>, it includes block-level estimators and extends to unit-level effects using 'Horvitz-Thompson' and 'Hájek' estimators. The package also provides asymptotic confidence intervals to support valid statistical inference.
+License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2

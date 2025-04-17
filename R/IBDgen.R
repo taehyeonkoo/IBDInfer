@@ -62,7 +62,7 @@ IBDgen <- function(K,n.trt,t,n.vec = NULL, L = NULL, l = NULL,W = NULL,balanced 
 
   # Count frequencies and proportions
   freq_table <- table(row_keys)
-  proportions <- as.numeric(freq_table) / nrow(mat)
+  proportions <- as.numeric(freq_table) / nrow(W)
 
   # Convert row_keys back to numeric matrix
   unique_rows <- do.call(rbind, strsplit(names(freq_table), ","))
@@ -71,14 +71,11 @@ IBDgen <- function(K,n.trt,t,n.vec = NULL, L = NULL, l = NULL,W = NULL,balanced 
   # Build data frame
   result_df <- as.data.frame(unique_rows)
 
-  # Rename columns to trt1, trt2, ..., trtK
-  # K <- ncol(result_df)
-  colnames(result_df) <- paste0("trt", seq_len(n.trt))
-
   # Add proportion column
   result_df$prop <- proportions
 
   W.uniq <- result_df
+
   # Enlarging W if nrow(W)<K #
   if (dim(W)[1] < K){
     Rk <-  kronecker(matrix(1, K/(dim(W)[1]), 1), W)

@@ -1,3 +1,10 @@
+#' @name global_variables
+#' @title Global Variables for IBDInfer
+#' @description This section declares global variables used in the IBDInfer package to prevent R CMD check warnings.
+#' @keywords internal
+utils::globalVariables(c("blk_id", "Y.obs", "n.vec", "R_k", "n_kt","s2"))
+
+
 #' @title Design-based Inference for Incomplete Block Designs
 #' @description Conduct the design-based inference for incomplete block designs.
 #'

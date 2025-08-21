@@ -182,17 +182,29 @@ IBDInfer <- function(y, b, z, g, w = c("Unit","Block"), alpha = 0.05, data = NUL
       if (k==j) {
         next
       }
-      off_diag_ht_wb[j,k] <- 1/2*(l[j,k]/(L[j]*L[k])-1/K)*(s_ht[j]+s_ht[k]-cross_yht[j,k])
-      off_diag_ht_bb[j,k] <- 1/2*(l[j,k]/(L[j]*L[k]))*(s_ht[j]+s_ht[k]-cross_yht[j,k])
+      if (l[j,k]<2) {
+        off_diag_ht_wb[j,k] <- NA
+        off_diag_ht_bb[j,k] <- 0
+      } else{
+        off_diag_ht_wb[j,k] <- 1/2*(l[j,k]/(L[j]*L[k])-1/K)*(s_ht[j]+s_ht[k]-cross_yht[j,k])
+        off_diag_ht_bb[j,k] <- 1/2*(l[j,k]/(L[j]*L[k]))*(s_ht[j]+s_ht[k]-cross_yht[j,k])
+      }
     }
   }
 
   Sht_bb <- diag(diag_ht_bb)+off_diag_ht_bb
   Sht_wb <-  diag(diag_ht_wb)+off_diag_ht_wb
-  g.idx <- which(g!=0)
+  zero_idx <- which(g == 0)
 
-  var_tau_ht_bb <- as.numeric(t(g[g.idx])%*%Sht_bb[g.idx,g.idx]%*%g[g.idx])
-  var_tau_ht_wb <- as.numeric(t(g[g.idx])%*%Sht_wb[g.idx,g.idx]%*%g[g.idx])
+  Sht_bb_temp <- Sht_bb
+  Sht_wb_temp <- Sht_wb
+  Sht_bb_temp[zero_idx, ] <- 0
+  Sht_bb_temp[, zero_idx] <- 0
+  Sht_wb_temp[zero_idx, ] <- 0
+  Sht_wb_temp[, zero_idx] <- 0
+
+  var_tau_ht_bb <- as.numeric(t(g)%*%Sht_bb_temp%*%g)#as.numeric(t(g[g.idx])%*%Sht_bb[g.idx,g.idx]%*%g[g.idx])
+  var_tau_ht_wb <- as.numeric(t(g)%*%Sht_wb_temp%*%g)#as.numeric(t(g[g.idx])%*%Sht_wb[g.idx,g.idx]%*%g[g.idx])
 
   CI_ht_bb <- c(tau.ht-qnorm(1-alpha/2)*sqrt(var_tau_ht_bb),tau.ht+qnorm(1-alpha/2)*sqrt(var_tau_ht_bb))
   CI_ht_wb <- c(tau.ht-qnorm(1-alpha/2)*sqrt(var_tau_ht_wb),tau.ht+qnorm(1-alpha/2)*sqrt(var_tau_ht_wb))
@@ -217,7 +229,7 @@ IBDInfer <- function(y, b, z, g, w = c("Unit","Block"), alpha = 0.05, data = NUL
     mean_trt_j <- paste0("mean_",j)
     for (k in 1:n.trt) {
       mean_trt_k <- paste0("mean_",k)
-      if (l[j,k]==0) {
+      if (l[j,k]<2) {
         cross_yhaj[j,k] <-NA
       } else{
         one_jk <- sum((!is.na(Kw_yestk)[,mean_trt_j])*(!is.na(Kw_yestk)[,mean_trt_k])*w*K)/l[j,k]
@@ -242,16 +254,28 @@ IBDInfer <- function(y, b, z, g, w = c("Unit","Block"), alpha = 0.05, data = NUL
       if (k==j) {
         next
       }
-      off_diag_haj_wb[j,k] <- 1/2*(l[j,k]/(L[j]*L[k])-1/K)*(s_haj[j]+s_haj[k]-cross_yhaj[j,k])
-      off_diag_haj_bb[j,k] <- 1/2*(l[j,k]/(L[j]*L[k]))*(s_haj[j]+s_haj[k]-cross_yhaj[j,k])
+      if (l[j,k]<2) {
+
+        off_diag_haj_wb[j,k] <- NA
+        off_diag_haj_bb[j,k] <- 0
+      } else{
+        off_diag_haj_wb[j,k] <- 1/2*(l[j,k]/(L[j]*L[k])-1/K)*(s_haj[j]+s_haj[k]-cross_yhaj[j,k])
+        off_diag_haj_bb[j,k] <- 1/2*(l[j,k]/(L[j]*L[k]))*(s_haj[j]+s_haj[k]-cross_yhaj[j,k])
+      }
     }
   }
 
   Shaj_bb <- diag(diag_haj_bb)+off_diag_haj_bb
   Shaj_wb <-  diag(diag_haj_wb)+off_diag_haj_wb
+  Shaj_bb_temp <- Shaj_bb
+  Shaj_wb_temp <- Shaj_wb
+  Shaj_bb_temp[zero_idx, ] <- 0
+  Shaj_bb_temp[, zero_idx] <- 0
+  Shaj_wb_temp[zero_idx, ] <- 0
+  Shaj_wb_temp[, zero_idx] <- 0
 
-  var_tau_haj_bb <- as.numeric(t(g[g.idx])%*%Shaj_bb[g.idx,g.idx]%*%g[g.idx])
-  var_tau_haj_wb <- as.numeric(t(g[g.idx])%*%Shaj_wb[g.idx,g.idx]%*%g[g.idx])
+  var_tau_haj_bb <- as.numeric(t(g)%*%Shaj_bb_temp%*%g)#as.numeric(t(g[g.idx])%*%Shaj_bb[g.idx,g.idx]%*%g[g.idx])
+  var_tau_haj_wb <- as.numeric(t(g)%*%Shaj_wb_temp%*%g)#as.numeric(t(g[g.idx])%*%Shaj_wb[g.idx,g.idx]%*%g[g.idx])
 
   CI_haj_bb <- c(tau.haj-qnorm(1-alpha/2)*sqrt(var_tau_haj_bb),tau.haj+qnorm(1-alpha/2)*sqrt(var_tau_haj_bb))
   CI_haj_wb <- c(tau.haj-qnorm(1-alpha/2)*sqrt(var_tau_haj_wb),tau.haj+qnorm(1-alpha/2)*sqrt(var_tau_haj_wb))
